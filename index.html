@@ -1,238 +1,33 @@
+
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>License Plate Tracker</title>
-
 <style>
-body{
-    margin:0;
-    font-family:Arial,Helvetica,sans-serif;
-    background:#ececec;
-}
-
-header{
-    background:#0d47a1;
-    color:white;
-    text-align:center;
-    padding:20px;
-    box-shadow:0 3px 10px rgba(0,0,0,.3);
-}
-
-h1{
-    margin:0;
-}
-
-#stats{
-    font-size:20px;
-    margin-top:10px;
-}
-
-button{
-    margin-top:15px;
-    padding:10px 20px;
-    border:none;
-    border-radius:8px;
-    background:#ff5252;
-    color:white;
-    cursor:pointer;
-    font-size:16px;
-}
-
-button:hover{
-    background:#ff1744;
-}
-
-#plates{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-    gap:18px;
-    padding:20px;
-}
-
-.plate{
-    height:95px;
-    border-radius:12px;
-    border:5px solid #222;
-    cursor:pointer;
-    transition:.2s;
-    position:relative;
-    box-shadow:0 4px 10px rgba(0,0,0,.2);
-    overflow:hidden;
-}
-
-.plate:hover{
-    transform:scale(1.04);
-}
-
-.top{
-    height:22px;
-}
-
-.middle{
-    height:53px;
-}
-
-.bottom{
-    height:20px;
-}
-
-.stateName{
-    position:absolute;
-    bottom:5px;
-    left:0;
-    width:100%;
-    text-align:center;
-    font-weight:bold;
-    color:#222;
-    font-size:15px;
-}
-
-.seen{
-    outline:6px solid limegreen;
-    transform:scale(1.03);
-}
-
-.check{
-    position:absolute;
-    top:5px;
-    right:8px;
-    font-size:24px;
-    display:none;
-}
-
-.seen .check{
-    display:block;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-
-<h1>🚗 License Plate Tracker</h1>
-
-<div id="stats">0 / 51 Seen</div>
-
-<button onclick="resetTracker()">Reset Progress</button>
-
-</header>
-
+body{margin:0;font-family:Arial;background:#ececec;padding-bottom:80px}
+header{background:#0d47a1;color:#fff;text-align:center;padding:20px}
+#stats{margin-top:10px;font-size:20px}
+button{padding:10px 18px;border:none;border-radius:8px;cursor:pointer}
+#reset{background:#ff5252;color:#fff}
+#plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:18px;padding:20px}
+.plate{height:95px;border:5px solid #222;border-radius:12px;position:relative;overflow:hidden;cursor:pointer}
+.top{height:22px}.middle{height:53px}.bottom{height:20px}
+.stateName{position:absolute;bottom:5px;width:100%;text-align:center;font-weight:bold}
+.seen{outline:6px solid limegreen}.check{display:none;position:absolute;top:4px;right:8px}.seen .check{display:block}
+#bottomMenu{position:fixed;left:0;right:0;bottom:0;display:flex;background:#fff;box-shadow:0 -2px 8px rgba(0,0,0,.2)}
+.menuBtn{flex:1;border-radius:0;padding:18px}.active{background:#0d47a1;color:#fff}
+</style></head><body>
+<header><h1>🚗 License Plate Tracker</h1><div id="stats"></div><button id="reset" onclick="resetTracker()">Reset Progress</button></header>
 <div id="plates"></div>
-
+<div id="bottomMenu"><button class="menuBtn active" onclick="showCountry('us',this)">🇺🇸 United States</button><button class="menuBtn" onclick="showCountry('ca',this)">🇨🇦 Canada</button></div>
 <script>
-
-const plates=[
-"Alabama","Alaska","Arizona","Arkansas","California","Colorado",
-"Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho",
-"Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana",
-"Maine","Maryland","Massachusetts","Michigan","Minnesota",
-"Mississippi","Missouri","Montana","Nebraska","Nevada",
-"New Hampshire","New Jersey","New Mexico","New York",
-"North Carolina","North Dakota","Ohio","Oklahoma","Oregon",
-"Pennsylvania","Rhode Island","South Carolina","South Dakota",
-"Tennessee","Texas","Utah","Vermont","Virginia","Washington",
-"West Virginia","Wisconsin","Wyoming","Washington D.C.","Ontario","British Columbia","Sasketchawan","Yukon Terr.","Quebec"
-,"Prince Edward Island","Alberta","Nunavet","Northwest Terr.","Manitoba","New Brunswick","Nova Scotia"
- ,"Newfoundland & Labrador"
-];
-
-const colors=[
-["#002868","#ffffff","#bf0a30"],
-["#2e7d32","#fff59d","#1565c0"],
-["#0d47a1","#90caf9","#ffffff"],
-["#ef6c00","#ffe082","#8d6e63"],
-["#880e4f","#f8bbd0","#ffffff"],
-["#4caf50","#ffffff","#1976d2"],
-["#5d4037","#d7ccc8","#ffffff"],
-["#00838f","#80deea","#ffffff"],
-["#6a1b9a","#ce93d8","#ffffff"],
-["#1565c0","#ffffff","#43a047"],
-["#00897b","#b2dfdb","#ffffff"],
-["#c62828","#ffcdd2","#ffffff"],
-["#D52B1E","#FFFFFF","#D52B1E"], // Alberta
-["#003DA5","#FFFFFF","#009F4D"], // British Columbia
-["#009639","#FFFFFF","#FFD100"], // Manitoba
-["#C8102E","#FFFFFF","#003DA5"], // New Brunswick
-["#005EB8","#FFFFFF","#00A3E0"], // Newfoundland & Labrador
-["#0057B8","#FFFFFF","#009739"], // Northwest Territories
-["#003DA5","#FFFFFF","#F2A900"], // Nova Scotia
-["#00205B","#FFFFFF","#F58220"], // Nunavut
-["#003DA5","#FFFFFF","#D52B1E"], // Ontario
-["#007A53","#FFFFFF","#D52B1E"], // Prince Edward Island
-["#0055A4","#FFFFFF","#D52B1E"], // Quebec
-["#006F53","#FFD100","#FFFFFF"], // Saskatchewan
-["#0097D8","#FFFFFF","#7FB800"]
-];
-
-let seen=JSON.parse(localStorage.getItem("seenStates")||"[]");
-
-const container=document.getElementById("plates");
-
-plates.forEach((state,i)=>{
-
-let c=colors[i%colors.length];
-
-let plate=document.createElement("div");
-plate.className="plate";
-
-plate.innerHTML=`
-<div class="top" style="background:${c[0]}"></div>
-<div class="middle" style="background:${c[1]}"></div>
-<div class="bottom" style="background:${c[2]}"></div>
-<div class="stateName">${state}</div>
-<div class="check">✔️</div>
-`;
-
-if(seen.includes(state))
-plate.classList.add("seen");
-
-plate.onclick=()=>{
-plate.classList.toggle("seen");
-
-if(plate.classList.contains("seen")){
-if(!seen.includes(state))
-seen.push(state);
-}else{
-seen=seen.filter(s=>s!==state);
-}
-
-localStorage.setItem("seenStates",JSON.stringify(seen));
-updateStats();
-
-};
-
-container.appendChild(plate);
-
-});
-
-function updateStats(){
-document.getElementById("stats").innerHTML=
-`${seen.length} / ${plates.length} Seen`;
-}
-
-function resetTracker(){
-
-if(confirm("Reset all progress?")){
-
-seen=[];
-localStorage.removeItem("seenStates");
-
-document.querySelectorAll(".plate").forEach(p=>{
-p.classList.remove("seen");
-});
-
-updateStats();
-
-}
-
-}
-
-updateStats();
-
-</script>
-
-</body>
-</html>
+const us=["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming","Washington D.C."];
+const ca=["Ontario","British Columbia","Saskatchewan","Yukon Terr.","Quebec","Prince Edward Island","Alberta","Nunavut","Northwest Terr.","Manitoba","New Brunswick","Nova Scotia","Newfoundland & Labrador"];
+const cols=[["#002868","#fff","#bf0a30"],["#2e7d32","#fff59d","#1565c0"],["#0d47a1","#90caf9","#fff"],["#ef6c00","#ffe082","#8d6e63"],["#880e4f","#f8bbd0","#fff"],["#4caf50","#fff","#1976d2"],["#5d4037","#d7ccc8","#fff"],["#00838f","#80deea","#fff"],["#6a1b9a","#ce93d8","#fff"],["#1565c0","#fff","#43a047"],["#D52B1E","#fff","#D52B1E"],["#003DA5","#fff","#009F4D"],["#009639","#fff","#FFD100"]];
+let seen=JSON.parse(localStorage.getItem("seenStates")||"[]"),current="us";
+const cont=document.getElementById("plates");
+function build(list){cont.innerHTML="";list.forEach((n,i)=>{let c=cols[i%cols.length],d=document.createElement("div");d.className="plate"+(seen.includes(n)?" seen":"");d.innerHTML=`<div class=top style="background:${c[0]}"></div><div class=middle style="background:${c[1]}"></div><div class=bottom style="background:${c[2]}"></div><div class=stateName>${n}</div><div class=check>✔️</div>`;d.onclick=()=>{d.classList.toggle("seen");if(d.classList.contains("seen")){if(!seen.includes(n))seen.push(n)}else seen=seen.filter(x=>x!=n);localStorage.setItem("seenStates",JSON.stringify(seen));stats()};cont.appendChild(d)});stats()}
+function stats(){let list=current=="us"?us:ca;document.getElementById("stats").textContent=`${list.filter(x=>seen.includes(x)).length} / ${list.length} Seen`;}
+function showCountry(c,b){current=c;document.querySelectorAll(".menuBtn").forEach(x=>x.classList.remove("active"));b.classList.add("active");build(c=="us"?us:ca)}
+function resetTracker(){if(confirm("Reset all progress?")){seen=[];localStorage.removeItem("seenStates");build(current=="us"?us:ca)}}
+build(us);
+</script></body></html>
